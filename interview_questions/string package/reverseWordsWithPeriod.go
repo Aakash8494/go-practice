@@ -1,3 +1,5 @@
+//go:build ignore
+
 package main
 
 import (
@@ -16,6 +18,7 @@ func reverseWordsWithPeriod(statement string) string {
 
 	// Step 2: Split the sentence into words
 	words := strings.Fields(statement)
+	// words := strings.Split(statement, " ")
 
 	// Step 3: Swap the words from start to end
 	for i, j := 0, len(words)-1; i < j; i, j = i+1, j-1 {
