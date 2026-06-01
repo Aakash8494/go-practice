@@ -55,7 +55,10 @@ func main() {
 
 	// Split: Breaks a string into a slice of strings based on a separator
 	fruits := strings.Split(csvLine, ",")
-	fmt.Printf("Split:      %q\n", fruits) // %q prints the slice with quotes: ["apple" "banana" "cherry"]
+	fmt.Printf(
+		"Split:      %q\n",
+		fruits,
+	) // %q prints the slice with quotes: ["apple" "banana" "cherry"]
 
 	// Join: Combines a slice of strings into a single string with a separator
 	joinedFruits := strings.Join(fruits, " | ")
