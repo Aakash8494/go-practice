@@ -21,7 +21,7 @@ type Truck interface {
 }
 
 // ---------------------------------------------------------
-// TYPE 1: NormalTruck (What used to just be "Truck")
+// TYPE 1: NormalTruck
 // ---------------------------------------------------------
 type NormalTruck struct {
 	id    string
@@ -71,12 +71,7 @@ func (e *ElectricTruck) UnloadCargo() error {
 // ---------------------------------------------------------
 // THE PROCESSOR
 // ---------------------------------------------------------
-// processTruck receives the INTERFACE. It doesn't care which struct it gets!
 func processTruck(truck Truck) error {
-	// We can't print truck.id directly here anymore because the interface
-	// doesn't know about "id", it only knows about the two methods.
-	// But it works perfectly for calling the methods!
-
 	if err := truck.LoadCargo(); err != nil {
 		return fmt.Errorf("Error loading cargo: %w", err)
 	}
@@ -89,16 +84,13 @@ func processTruck(truck Truck) error {
 }
 
 func main() {
-	// Because our methods use pointer receivers like `(t *NormalTruck)`,
-	// we use the '&' symbol to pass their memory addresses into the slice.
 	trucks := []Truck{
 		&NormalTruck{id: "Truck-1"},
 		&NormalTruck{id: "Truck-2"},
 		&NormalTruck{id: "Truck-3"},
-		&ElectricTruck{id: "EV-1", battery: 100}, // Mixed in the same array!
+		&ElectricTruck{id: "EV-1", battery: 100},
 	}
 
-	// The new detailed loop with error matching
 	for _, truck := range trucks {
 		fmt.Printf("Processing: %+v\n", truck)
 
@@ -119,15 +111,56 @@ func main() {
 	}
 
 	fmt.Println("-----------------------")
+	fmt.Println("--- NEW: EMPTY INTERFACES & TYPE ASSERTION ---")
 	fmt.Println("-----------------------")
 
-	// Your original testing loop, completely untouched!
-	// (It will just run through the same trucks array a second time)
-	for _, truck := range trucks {
-		if err := processTruck(truck); err != nil {
-			// log.Fatalf("Error processing truck: %s", err)
-			fmt.Println("Error processing truck: Println --->", err)
-			fmt.Printf("Error processing truck: Printf ---> %s\n", err)
-		}
+	// From the screenshot: Creating a map that accepts ANY value type
+	person := make(map[string]interface{}, 0)
+	person["name"] = "Tiago" // Storing a string
+	person["age"] = 42       // Storing an int
+
+	// Type Assertion:
+	// 1. Try to grab "width"
+	// 2. Assert it is an integer by adding `.(int)`
+	// 3. Go returns the value AND a boolean (`exists`) letting us know if it worked
+	val, exists := person["width"].(int)
+
+	if !exists {
+		// I changed log.Fatal to fmt.Println so it doesn't kill your app!
+		fmt.Println("Error: width does not exist or is not an integer")
+	} else {
+		fmt.Println("Value found:", val)
 	}
 }
+
+// =====================================================================
+// --- LECTURE LEARNINGS (Cheat Sheet) ---
+// =====================================================================
+/*
+1. Abstraction over Concreteness:
+   Rely on abstractions (interfaces) rather than concrete implementations (structs).
+
+2. Interfaces as Blueprints:
+   An interface is essentially just a blueprint of method signatures.
+
+3. Automatic/Implicit Implementation:
+   Go does not use an 'implements' keyword. If a struct satisfies the interface by having the exact methods required, the compiler automatically accepts it.
+
+4. Pointer Receivers vs. Value Receivers:
+   To update a struct's field (like `cargo += 1`) inside a method, you MUST use a pointer receiver (`*NormalTruck`). Otherwise, you are just modifying a temporary clone.
+
+5. Printing Struct Fields:
+   Use `%+v` in printf to see the property names (like `battery:100`) alongside their values.
+
+6. The `error` interface:
+   The built-in `error` type is an interface. You create custom errors by implementing it.
+
+7. Error String Formatting:
+   Error strings should not be capitalized.
+
+8. Empty Interfaces (`interface{}` / `any`):
+   An empty interface specifies zero methods, meaning any type (string, struct, error) can satisfy it. In Go 1.18+, use `any`, which is just an alias for `interface{}`.
+
+9. Type Assertion (From the screenshot!):
+   When you pull a value out of an empty interface, the compiler doesn't know what type it is. You must evaluate it using "Type Assertion" by appending `.(type)` to it (e.g., `person["width"].(int)`). This returns the value and a boolean confirming if the assertion was successful.
+*/
