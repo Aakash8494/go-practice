@@ -12,69 +12,105 @@ var (
 	ErrCargoDoorJammed = errors.New("cargo door jammed")
 )
 
-type Truck struct {
-	id string
+// ---------------------------------------------------------
+// THE INTERFACE
+// ---------------------------------------------------------
+type Truck interface {
+	LoadCargo() error
+	UnloadCargo() error
 }
 
-// A method attached to the truck
-func (t *Truck) LoadCargo() error {
+// ---------------------------------------------------------
+// TYPE 1: NormalTruck (What used to just be "Truck")
+// ---------------------------------------------------------
+type NormalTruck struct {
+	id    string
+	cargo int
+}
+
+func (t *NormalTruck) LoadCargo() error {
 	if t.id == "Truck-3" {
 		return ErrTruckNotFound
 	}
 	if t.id == "Truck-2" {
 		return ErrCargoDoorJammed
 	}
+	t.cargo += 1
 	return nil
 }
 
-// NEW: The UnloadCargo method (From the screenshot)
-func (t *Truck) UnloadCargo() error {
+func (t *NormalTruck) UnloadCargo() error {
 	if t.id == "Truck-1" {
 		return ErrCargoDoorJammed
 	}
+	t.cargo = 0
 	return nil
 }
 
-// processTruck handles the loading and unloading of a truck.
-func processTruck(truck Truck) error {
-	fmt.Printf("Processing truck: %s\n", truck.id)
+// ---------------------------------------------------------
+// TYPE 2: ElectricTruck
+// ---------------------------------------------------------
+type ElectricTruck struct {
+	id      string
+	cargo   int
+	battery int
+}
 
-	// Loading Phase
+func (e *ElectricTruck) LoadCargo() error {
+	e.cargo += 1
+	e.battery -= 1
+	return nil
+}
+
+func (e *ElectricTruck) UnloadCargo() error {
+	e.cargo = 0
+	e.battery -= 1
+	return nil
+}
+
+// ---------------------------------------------------------
+// THE PROCESSOR
+// ---------------------------------------------------------
+// processTruck receives the INTERFACE. It doesn't care which struct it gets!
+func processTruck(truck Truck) error {
+	// We can't print truck.id directly here anymore because the interface
+	// doesn't know about "id", it only knows about the two methods.
+	// But it works perfectly for calling the methods!
+
 	if err := truck.LoadCargo(); err != nil {
 		return fmt.Errorf("Error loading cargo: %w", err)
 	}
 
-	// NEW: Unloading Phase (From the screenshot)
 	if err := truck.UnloadCargo(); err != nil {
 		return fmt.Errorf("Error unloading cargo: %w", err)
 	}
 
-	return nil // Changed from ErrNotImplemented to nil to allow success!
+	return nil
 }
 
 func main() {
+	// Because our methods use pointer receivers like `(t *NormalTruck)`,
+	// we use the '&' symbol to pass their memory addresses into the slice.
 	trucks := []Truck{
-		{id: "Truck-1"},
-		{id: "Truck-2"},
-		{id: "Truck-3"},
-		{id: "Truck-4"},
+		&NormalTruck{id: "Truck-1"},
+		&NormalTruck{id: "Truck-2"},
+		&NormalTruck{id: "Truck-3"},
+		&ElectricTruck{id: "EV-1", battery: 100}, // Mixed in the same array!
 	}
 
+	// The new detailed loop with error matching
 	for _, truck := range trucks {
-		fmt.Printf("Truck %s arrived.\n", truck.id)
+		fmt.Printf("Processing: %+v\n", truck)
 
-		// Catch the error returned by the function
 		err := processTruck(truck)
 
 		if err != nil {
-			// ERROR MATCHING: Still works perfectly with both Load and Unload errors!
 			if errors.Is(err, ErrTruckNotFound) {
-				fmt.Printf("ALERT: We lost %s! It is not in the system.\n", truck.id)
+				fmt.Printf("ALERT: We lost it! It is not in the system.\n")
 			} else if errors.Is(err, ErrCargoDoorJammed) {
-				fmt.Printf("MAINTENANCE: Send mechanic to %s. %v\n", truck.id, err)
+				fmt.Printf("MAINTENANCE: Send mechanic. %v\n", err)
 			} else {
-				// A fallback for any unknown errors
-				fmt.Printf("Error: Could not process %s because %v\n", truck.id, err)
+				fmt.Printf("Error: Could not process because %v\n", err)
 			}
 		} else {
 			fmt.Println("Processed successfully.")
@@ -86,11 +122,12 @@ func main() {
 	fmt.Println("-----------------------")
 
 	// Your original testing loop, completely untouched!
-	// for _, truck := range trucks {
-	// 	if err := processTruck(truck); err != nil {
-	// 		// log.Fatalf("Error processing truck: %s", err)
-	// 		fmt.Println("Error processing truck: Println --->", err)
-	// 		fmt.Printf("Error processing truck: Printf ---> %s\n", err)
-	// 	}
-	// }
+	// (It will just run through the same trucks array a second time)
+	for _, truck := range trucks {
+		if err := processTruck(truck); err != nil {
+			// log.Fatalf("Error processing truck: %s", err)
+			fmt.Println("Error processing truck: Println --->", err)
+			fmt.Printf("Error processing truck: Printf ---> %s\n", err)
+		}
+	}
 }
