@@ -62,8 +62,8 @@ func TestConcurrentUpdate(t *testing.T) {
 	for i := 0; i < numGoroutines; i++ {
 		go func() {
 			for j := 0; j < iterations; j++ {
-				truck, _ := manager.GetTruck("1")
-				manager.UpdateTruckCargo("1", truck.Cargo+1)
+				// 🛡️ THE FIX: We use our new atomic function so the math is safe!
+				manager.AddCargo("1", 1)
 			}
 			done <- true
 		}()

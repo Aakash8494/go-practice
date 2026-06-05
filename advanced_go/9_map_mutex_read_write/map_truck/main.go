@@ -7,12 +7,13 @@ import (
 
 var ErrTruckNotFound = errors.New("truck not found")
 
-// The Interface (No locks mentioned here!)
+// The Interface (Updated to include our new AddCargo tool)
 type FleetManager interface {
 	AddTruck(id string, cargo int) error
-	GetTruck(id string) (Truck, error) // Returns a safe clone (Truck)
+	GetTruck(id string) (Truck, error)
 	RemoveTruck(id string) error
 	UpdateTruckCargo(id string, cargo int) error
+	AddCargo(id string, amount int) error // <-- NEW RULE
 }
 
 type Truck struct {
@@ -52,7 +53,6 @@ func (m *truckManager) GetTruck(id string) (Truck, error) {
 		return Truck{}, ErrTruckNotFound
 	}
 
-	// Dereference pointer to return a safe clone
 	return *truck, nil
 }
 
@@ -69,7 +69,7 @@ func (m *truckManager) RemoveTruck(id string) error {
 	return nil
 }
 
-// WRITE Lock (Updating data)
+// WRITE Lock (Updating exact data)
 func (m *truckManager) UpdateTruckCargo(id string, cargo int) error {
 	m.Lock()
 	defer m.Unlock()
@@ -80,5 +80,20 @@ func (m *truckManager) UpdateTruckCargo(id string, cargo int) error {
 	}
 
 	truck.Cargo = cargo
+	return nil
+}
+
+// 🛡️ THE FIX: Atomic Read-Modify-Write
+func (m *truckManager) AddCargo(id string, amount int) error {
+	m.Lock()         // 1. LOCK THE DOOR
+	defer m.Unlock() // 4. UNLOCK WHEN FINISHED
+
+	truck, ok := m.trucks[id]
+	if !ok {
+		return ErrTruckNotFound
+	}
+
+	// 2 & 3. READ AND WRITE THE MATH WHILE THE DOOR IS STILL LOCKED!
+	truck.Cargo = truck.Cargo + amount
 	return nil
 }
