@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"runtime"
+)
 
 // Fix: Use the 'var' keyword at the package level
 // deckSize := 20
@@ -26,6 +29,10 @@ func main() {
 	for i, card := range cards {
 		fmt.Println(i, card)
 	}
+
+	// This will ask your machine exactly how many cores it has!
+	totalBrainPower := runtime.NumCPU()
+	fmt.Printf("Bro, your laptop has %d CPU cores!\n", totalBrainPower)
 }
 
 func newCard() string {

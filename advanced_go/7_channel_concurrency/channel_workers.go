@@ -4,7 +4,6 @@ package main
 
 import (
 	"fmt"
-	"runtime"
 	"time"
 )
 
@@ -56,7 +55,7 @@ func main() {
 	// 6. LOCK THE JOBS PIPE
 	// We tell the waiters: "No more new customers are coming!"
 	// This allows their 'for range' loop to safely stop once the queue is empty.
-	close(incomingOrdersPipe)
+	// close(incomingOrdersPipe)
 
 	// 7. DELIVER THE FOOD (Read from the results pipe)
 	// We know exactly 5 orders were placed, so we wait to pull exactly 5 results out.
@@ -66,7 +65,22 @@ func main() {
 		fmt.Println(completedOrderMessage)
 	}
 
-	// This will ask your machine exactly how many cores it has!
-	totalBrainPower := runtime.NumCPU()
-	fmt.Printf("Bro, your laptop has %d CPU cores!\n", totalBrainPower)
+	fmt.Println("===============================")
+	fmt.Println("===============================")
+	fmt.Println("===============================")
+	fmt.Println("===============================")
+	fmt.Println("===============================")
+
+	incomingOrdersPipe <- 6
+	test := <-finishedFoodPipe
+	fmt.Println(test)
+
+	incomingOrdersPipe <- 7
+	test1 := <-finishedFoodPipe
+	fmt.Println(test1)
+
+	incomingOrdersPipe <- 8
+	test2 := <-finishedFoodPipe
+	fmt.Println(test2)
+
 }
