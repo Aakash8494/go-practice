@@ -1,4 +1,4 @@
-package main
+package main_truck
 
 import (
 	"errors"
@@ -93,7 +93,8 @@ func (m *truckManager) AddCargo(id string, amount int) error {
 		return ErrTruckNotFound
 	}
 
-	// 2 & 3. READ AND WRITE THE MATH WHILE THE DOOR IS STILL LOCKED!
+	// 2. READ THE CURRENT VALUE
+	// 3. MODIFY THE VALUE
 	truck.Cargo = truck.Cargo + amount
 	return nil
 }
