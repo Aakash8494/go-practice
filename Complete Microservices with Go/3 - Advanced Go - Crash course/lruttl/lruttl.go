@@ -2,6 +2,7 @@ package main
 
 import (
 	"container/list"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -89,4 +90,31 @@ func (c *LRUCache) Get(key string) (string, bool) {
 	// If it's valid, move it to the front of the line because it was just used!
 	c.lineup.MoveToFront(element)
 	return item.value, true
+}
+
+func main() {
+	// Create a club that only holds 2 people, and their pass expires in 2 seconds.
+	cache := NewLRUCache(2, 2*time.Second)
+
+	fmt.Println("--- Adding Data ---")
+	cache.Set("User1", "Alice")
+	cache.Set("User2", "Bob")
+
+	val, _ := cache.Get("User1")
+	fmt.Println("Got User1:", val) // Should print "Alice"
+
+	fmt.Println("\n--- Testing LRU (Kicking someone out) ---")
+	// Since capacity is 2, adding a 3rd person will kick out the oldest!
+	// We just checked "User1", so "User2" is now the oldest.
+	cache.Set("User3", "Charlie")
+
+	_, exists := cache.Get("User2")
+	fmt.Println("Does User2 exist?", exists) // Should print "false" (He got kicked out!)
+
+	fmt.Println("\n--- Testing TTL (Expiration) ---")
+	fmt.Println("Waiting 3 seconds...")
+	time.Sleep(3 * time.Second) // Wait for the passes to expire
+
+	_, exists = cache.Get("User1")
+	fmt.Println("Does User1 exist after waiting?", exists) // Should print "false" (Expired!)
 }
